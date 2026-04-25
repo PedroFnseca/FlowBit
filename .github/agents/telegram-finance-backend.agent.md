@@ -31,6 +31,7 @@ Before writing any code, always:
 2. Identify the module and whether it already exists.
 3. Check tests. Every service and guard change requires corresponding unit test updates.
 4. Validate env discipline. New secret or credential goes in .env, never hardcoded.
+5. If any endpoint is added, removed, or changed (route, method, headers, query params, body, response shape), update [postman/FlowBit.local.postman_collection.json](../../postman/FlowBit.local.postman_collection.json) in the same task.
 
 ## Code Generation Rules
 
@@ -86,6 +87,12 @@ Register the module in app.module.ts. Never skip __tests__.
 - Handlers live in src/telegram/telegram.service.ts.
 - Handlers call NestJS services via DI (never internal HTTP).
 - Extract telegramId as String(ctx.from!.id).
+
+### Postman collection
+
+- Keep [postman/FlowBit.local.postman_collection.json](../../postman/FlowBit.local.postman_collection.json) synchronized with backend endpoints.
+- Any endpoint change must include matching Postman request updates (headers, params, payload examples, and path variables).
+- When possible, keep collection variables reusable for local testing (baseUrl, telegramUserId, transactionId, etc.).
 
 ## Commit Message Convention
 

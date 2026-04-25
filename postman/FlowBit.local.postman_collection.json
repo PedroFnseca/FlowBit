@@ -1,0 +1,230 @@
+{
+  "info": {
+    "name": "FlowBit Local API",
+    "description": "Local collection for FlowBit backend testing. Suggested execution order: 1) Health, 2) Users/Create User, 3) Transactions/Create Transaction, 4) Transactions/List Transactions, 5) Finances/Get Summary, 6) Transactions/Delete Transaction. Protected endpoints require the X-Telegram-User-Id header.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000"
+    },
+    {
+      "key": "telegramUserId",
+      "value": "123456789"
+    },
+    {
+      "key": "transactionId",
+      "value": "1"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "description": "Public endpoint for uptime checks. Use it first to confirm the local API is running and reachable.",
+      "item": [
+        {
+          "name": "Get Health",
+          "description": "Returns service status and current timestamp. Does not require authentication.",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "health"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "description": "User onboarding endpoints. Create a Telegram user before testing any protected route.",
+      "item": [
+        {
+          "name": "Create User",
+          "description": "Creates a user by telegramId. Test script stores returned telegramId in collection variable telegramUserId.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "var json = pm.response.json();",
+                  "if (json && json.telegramId) {",
+                  "  pm.collectionVariables.set('telegramUserId', json.telegramId);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"telegramId\": \"{{telegramUserId}}\",\n  \"firstName\": \"Pedro\",\n  \"username\": \"pedro_local\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/users",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Transactions",
+      "description": "Protected transaction endpoints. All requests in this folder require X-Telegram-User-Id with an existing user telegramId.",
+      "item": [
+        {
+          "name": "Create Transaction",
+          "description": "Creates a transaction for the authenticated Telegram user. Test script stores the returned id in transactionId for later deletion.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "var json = pm.response.json();",
+                  "if (json && json.id) {",
+                  "  pm.collectionVariables.set('transactionId', String(json.id));",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Telegram-User-Id",
+                "value": "{{telegramUserId}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 150.0,\n  \"category\": \"Food\",\n  \"description\": \"Local test transaction\",\n  \"type\": \"DEBIT\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/transactions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "transactions"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "List Transactions",
+          "description": "Lists all transactions belonging to the authenticated Telegram user.",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Telegram-User-Id",
+                "value": "{{telegramUserId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/transactions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "transactions"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Transaction",
+          "description": "Deletes a transaction by id if it belongs to the authenticated Telegram user. Expects transactionId variable.",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "X-Telegram-User-Id",
+                "value": "{{telegramUserId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/transactions/{{transactionId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "transactions",
+                "{{transactionId}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Finances",
+      "description": "Protected finance overview endpoints based on user transactions.",
+      "item": [
+        {
+          "name": "Get Summary",
+          "description": "Returns totalCredit, totalDebit, and balance for the authenticated Telegram user.",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Telegram-User-Id",
+                "value": "{{telegramUserId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/finances/summary",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "finances",
+                "summary"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
